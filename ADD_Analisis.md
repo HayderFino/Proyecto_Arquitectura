@@ -8,6 +8,71 @@
 
 ---
 
+## ✅ RESPUESTAS CLAVE — Lo que el ADD Evidencia
+
+> Estas son las tres respuestas centrales que el análisis ADD sustenta para el proyecto **Smart Energy Hub**. El resto del documento detalla el proceso iterativo que llevó a estas conclusiones.
+
+---
+
+### ❓ 1. ¿Cuál es el Atributo de Calidad más importante?
+
+## 🔴 DISPONIBILIDAD
+
+| | |
+|---|---|
+| **Métrica exigida** | 99.9% uptime — operación continua 24/7 |
+| **Escenario crítico** | Si el Microservicio de Analítica falla → **0% de pérdida de datos de sensores** |
+| **¿Por qué es el más importante?** | El sistema monitorea consumo energético en tiempo real. Un fallo significa picos no detectados y consecuencias económicas directas para los usuarios |
+| **Evidencia en el proyecto** | RNF: *"Sistema operativo 24/7"* · ADR-001: *"Si Analítica cae, Ingesta sigue recibiendo datos"* · Riesgo documentado: *"Pérdida de eventos — Impacto ALTO"* |
+
+---
+
+### ❓ 2. ¿Qué Táctica aplicarían?
+
+## 🔧 REDUNDANCIA PASIVA MEDIANTE BUFFER DE MENSAJES
+
+| | |
+|---|---|
+| **Categoría SEI** | Tácticas de Disponibilidad → Recuperación de Fallos → Redundancia Pasiva |
+| **Implementación** | RabbitMQ actúa como buffer persistente entre microservicios |
+| **Mecanismo** | AMQP Acknowledgements (ACK/NACK) + Dead Letter Queue (DLQ) |
+| **Efecto** | Los mensajes esperan en cola aunque el consumidor esté caído; al recuperarse, procesa todos sin pérdida |
+
+```
+ANTES (sin táctica): Analítica cae → Ingesta falla en cascada → datos PERDIDOS ❌
+DESPUÉS (con táctica): Analítica cae → mensajes en cola RabbitMQ → Analítica
+                       se recupera → procesa mensajes acumulados → 0% pérdida ✅
+```
+
+---
+
+### ❓ 3. ¿Qué Patrón usarían?
+
+## 🏗️ PUBLISHER / SUBSCRIBER (Pub/Sub) sobre EVENT-DRIVEN ARCHITECTURE
+
+| | |
+|---|---|
+| **Patrón** | Publisher/Subscriber (Pub/Sub) |
+| **Estilo arquitectónico** | Event-Driven Architecture (EDA) |
+| **Implementación** | Ingesta publica → RabbitMQ → Analítica y Alertas suscriben |
+| **Desacoplamiento** | Espacial (los servicios no se conocen) + Temporal (no necesitan estar activos al mismo tiempo) |
+
+```
+  ┌──────────┐   pub   ┌─────────────────────┐   sub   ┌─────────────┐
+  │ Ingesta  │────────►│  RabbitMQ (Broker)  │────────►│  Analítica  │
+  │  (3001)  │         │                     │         │   (3002)    │
+  └──────────┘         │  sensor.data.raw    │         └─────────────┘
+                       │  alerts.generated   │   sub   ┌─────────────┐
+                       │                     │────────►│   Alertas   │
+                       └─────────────────────┘         │   (3003)    │
+                                                        └─────────────┘
+```
+
+> **¿Por qué este patrón?** Porque desacopla totalmente productores de consumidores.
+> Si Alertas falla, Ingesta y Analítica **siguen funcionando sin interrupciones**.
+
+---
+
 ## 1. ¿Qué es ADD?
 
 El **Attribute-Driven Design (ADD)** es un método de diseño arquitectónico iterativo desarrollado por el SEI (Software Engineering Institute) que usa los **atributos de calidad como conductores (drivers)** de las decisiones de descomposición del sistema.
