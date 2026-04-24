@@ -1,0 +1,64 @@
+Smart Energy Hub - Documento de Arquitectura (Corte 1)
+1. Introducción
+Smart Energy Hub es una plataforma web orientada al monitoreo del consumo energético por dispositivo mediante sensores simulados. El sistema permite visualizar métricas en tiempo real, detectar patrones de consumo elevado y generar alertas para optimizar el uso de energía.
+2. Problema
+Los usuarios no cuentan con herramientas que permitan identificar claramente el consumo energético individual por dispositivo, lo que ocasiona desperdicio energético, altos costos operativos y falta de control sobre el uso eficiente de recursos.
+3. Objetivos
+• Diseñar una arquitectura escalable capaz de recibir datos de múltiples sensores.
+• Implementar analítica básica para detectar patrones de alto consumo.
+• Diseñar un panel web de monitoreo con métricas y alertas.
+4. Stakeholders
+• Usuario final
+• Administrador del sistema
+• Operadores energéticos (futuro)
+5. Alcance
+Incluye:
+• Recepción de datos de sensores simulados
+• Almacenamiento histórico de métricas
+• Generación de alertas
+• Dashboard web de monitoreo
+
+No incluye:
+• Integración con hardware real
+• Facturación energética
+• Control remoto de dispositivos
+6. Requerimientos Funcionales
+RF1: El sistema recibirá datos energéticos en tiempo real.
+RF2: El sistema almacenará métricas históricas.
+RF3: El sistema detectará picos de consumo.
+RF4: El sistema generará alertas.
+RF5: El sistema mostrará dashboard web.
+7. Requerimientos No Funcionales
+• Alta disponibilidad
+• Escalabilidad horizontal
+• Baja latencia
+• Procesamiento asíncrono
+• Alta mantenibilidad
+8. Modelo C4 - Contexto
+El sistema Smart Energy Hub interactúa con usuarios web que visualizan métricas energéticas. Los sensores simulados envían eventos de consumo que son procesados por la plataforma. Además, se integra con servicios externos como notificaciones.
+9. Modelo C4 - Contenedores
+Frontend Web Dashboard (React o similar)
+API Gateway
+Microservicio de Ingesta de Sensores
+Microservicio de Analítica
+Microservicio de Alertas
+Message Broker (RabbitMQ o Kafka)
+Base de datos NoSQL (Firebase Firestore / MongoDB)
+10. Propuesta Arquitectónica
+Se propone una arquitectura basada en microservicios y orientada a eventos (Event‑Driven Architecture). Esta arquitectura permite procesar grandes volúmenes de datos de sensores de manera eficiente y desacoplada.
+11. Uso de Firebase
+Firebase será utilizado para autenticación mediante Google Login, permitiendo acceso rápido y seguro al sistema. Además, Firebase Firestore podrá utilizarse como base de datos NoSQL para almacenamiento rápido de métricas.
+12. ADRs
+ADR‑001 Uso de Firebase Authentication
+Decisión: Implementar autenticación con Google mediante Firebase.
+Consecuencia: Simplificación del login y mayor seguridad.
+ADR‑002 Uso de Arquitectura Event‑Driven
+Decisión: Procesar eventos de sensores mediante broker.
+Consecuencia: Mayor escalabilidad y desacoplamiento.
+ADR‑003 Uso de Base de Datos NoSQL
+Decisión: Utilizar Firestore o MongoDB.
+Consecuencia: Alta velocidad de escritura y flexibilidad.
+13. Riesgos
+• Alto volumen de datos energéticos
+• Posible pérdida de eventos
+• Inconsistencia temporal en alertas
