@@ -22,15 +22,22 @@ La vista de escenarios une a las otras cuatro perspectivas mediante los casos de
 <summary>💻 Ver código fuente Mermaid</summary>
 
 ```mermaid
-usecaseDiagram
-    actor Usuario as "Usuario Final"
-    actor Sensor as "Simulador de Sensores"
+flowchart LR
+    Usuario("Usuario Final")
+    Sensor("Simulador de Sensores")
     
-    Usuario --> (Visualizar Consumo Real)
-    Usuario --> (Recibir Alertas de Pico)
-    Usuario --> (Marcar Alertas como Leídas)
+    subgraph CasosDeUso["Casos de Uso (Smart Energy Hub)"]
+        UC1("(UC1) Monitorear consumo en tiempo real")
+        UC2("(UC2) Recibir alertas de picos de consumo")
+        UC3("(UC3) Marcar alertas como leídas")
+        UC4("(UC4) Enviar lectura energética")
+    end
     
-    Sensor --> (Enviar Lectura Energética)
+    Usuario --> UC1
+    Usuario --> UC2
+    Usuario --> UC3
+    
+    Sensor --> UC4
 ```
 </details>
 
