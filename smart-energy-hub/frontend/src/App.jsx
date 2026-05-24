@@ -237,6 +237,7 @@ export default function App() {
 
         {/* ── Active page ────────────────────────────────────── */}
         <ActivePage
+          user={user}
           globalStats={globalStats}
           summary={summary}
           connected={connected}

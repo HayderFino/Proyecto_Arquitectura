@@ -43,7 +43,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function Dashboard({ globalStats, summary, connected, onRefresh }) {
+export default function Dashboard({ user, globalStats, summary, connected, onRefresh }) {
   const [timeline, setTimeline]     = useState([]);
   const [selectedDev, setSelectedDev] = useState(null);
   const [loading, setLoading]       = useState(false);
@@ -88,15 +88,17 @@ export default function Dashboard({ globalStats, summary, connected, onRefresh }
 
   const stats = globalStats || {};
 
+  const firstName = user?.displayName ? user.displayName.split(' ')[0] : 'Usuario';
+
   return (
     <div className="page">
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <h1>Panel de Control</h1>
+          <h1>¡Hola, {firstName}! 👋</h1>
           <span className="live-badge"><span className="live-dot" />EN VIVO</span>
         </div>
-        <p>Monitoreo de consumo energético en tiempo real — Smart Energy Hub</p>
+        <p>Bienvenido de nuevo. Monitoreo de consumo energético en tiempo real — Smart Energy Hub</p>
       </div>
 
       {/* ── KPI Cards ─────────────────────────────────────────── */}
