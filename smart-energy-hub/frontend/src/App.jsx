@@ -1,11 +1,14 @@
 // ─── App.jsx — Smart Energy Hub ─────────────────────────────────────────────
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, logOut } from './services/firebase';
 import { useWebSocket } from './hooks/useWebSocket';
 import { api } from './services/api';
 import Dashboard from './pages/Dashboard';
 import Devices   from './pages/Devices';
 import Alerts    from './pages/Alerts';
 import Settings  from './pages/Settings';
+import Login     from './pages/Login';
 
 // ── Icon helpers ─────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -35,6 +38,8 @@ function Toasts({ toasts, onClose }) {
 
 // ── Main App ──────────────────────────────────────────────────────────────────
 export default function App() {
+  const [user,         setUser]         = useState(null);
+  const [loadingAuth,  setLoadingAuth]  = useState(true);
   const [activePage,   setActivePage]   = useState('dashboard');
   const [sidebarOpen,  setSidebarOpen]  = useState(false);   // mobile
   const [collapsed,    setCollapsed]    = useState(false);   // desktop
@@ -43,6 +48,15 @@ export default function App() {
   const [globalStats,  setGlobalStats]  = useState(null);
   const [summary,      setSummary]      = useState([]);
   const toastIdRef = useRef(0);
+
+  // Monitor auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Add toast
   const addToast = useCallback((alert) => {
@@ -57,6 +71,7 @@ export default function App() {
 
   // Initial data fetch
   const fetchData = useCallback(async () => {
+    if (!user) return;
     try {
       const [stats, summ, unread] = await Promise.allSettled([
         api.getGlobalStats(),
@@ -67,12 +82,17 @@ export default function App() {
       if (summ.status   === 'fulfilled') setSummary(summ.value);
       if (unread.status === 'fulfilled') setUnreadCount(unread.value.count);
     } catch (_) {}
-  }, []);
+  }, [user]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user, fetchData]);
 
   // WebSocket messages
   const handleWsMessage = useCallback((msg) => {
+    if (!user) return;
     if (msg.type === 'alerts' && Array.isArray(msg.data)) {
       msg.data.forEach(a => addToast(a));
       setUnreadCount(n => n + msg.data.length);
@@ -81,7 +101,7 @@ export default function App() {
       if (msg.global)  setGlobalStats(msg.global);
       if (msg.summary) setSummary(msg.summary);
     }
-  }, [addToast]);
+  }, [user, addToast]);
 
   const { connected } = useWebSocket(handleWsMessage);
 
@@ -91,6 +111,25 @@ export default function App() {
     setSidebarOpen(false);
     if (page === 'alerts') setUnreadCount(0);
   }, []);
+
+  if (loadingAuth) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg-deep)',
+        color: 'var(--text-secondary)'
+      }}>
+        <div className="skeleton" style={{ width: 220, height: 60, borderRadius: 10 }} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   const ActivePage = NAV_ITEMS.find(n => n.id === activePage)?.page || Dashboard;
 
@@ -107,6 +146,35 @@ export default function App() {
         <div className="sidebar-logo">
           <div className="logo-icon">⚡</div>
           <span className="logo-text">Smart Energy Hub</span>
+        </div>
+
+        {/* User Profile Block */}
+        <div className="sidebar-profile" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--border)',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap'
+        }}>
+          <img src={user.photoURL} alt={user.displayName} style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: '2px solid var(--accent-primary)',
+            boxShadow: 'var(--shadow-glow)'
+          }} />
+          {!collapsed && (
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user.displayName}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user.email}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="sidebar-nav">
@@ -136,6 +204,10 @@ export default function App() {
         </div>
 
         <div className="sidebar-footer">
+          <button className="collapse-btn" onClick={logOut} style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 18 }}>🚪</span>
+            <span className="btn-label">Cerrar Sesión</span>
+          </button>
           <button className="collapse-btn" onClick={() => setCollapsed(c => !c)}>
             <span style={{ fontSize: 18 }}>{collapsed ? '▶' : '◀'}</span>
             <span className="btn-label">{collapsed ? 'Expandir' : 'Colapsar'}</span>
