@@ -12,6 +12,18 @@ set HUB_DIR=%BASE_DIR%smart-energy-hub
 echo Directorio base detectado: %HUB_DIR%
 echo.
 
+:: 0. Copiar el nuevo favicon al directorio public
+if exist "%BASE_DIR%copy-favicon.js" (
+    echo [0/6] Copiando el nuevo favicon generado...
+    node "%BASE_DIR%copy-favicon.js"
+)
+
+:: Generar diagramas SVG a partir de los archivos markdown
+if exist "%BASE_DIR%generate-svgs.js" (
+    echo [*] Generando diagramas SVG del Corte 2...
+    node "%BASE_DIR%generate-svgs.js"
+)
+
 :: 1. Verificar e instalar dependencias en los microservicios, simulador y frontend
 echo [1/6] Verificando dependencias de Ingesta...
 if not exist "%HUB_DIR%\services\ingesta\node_modules\" (
